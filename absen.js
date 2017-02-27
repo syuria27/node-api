@@ -4,12 +4,12 @@ const isset = require('isset');
 var fs = require( 'fs' );
 var pad = require('pad-left');
 
-function ABSEN_ROUTER(router,connection,md5) {
+function ABSEN_ROUTER(router,connection) {
     var self = this;
-    self.handleRoutes(router,connection,md5);
+    self.handleRoutes(router,connection);
 }
 
-ABSEN_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
+ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
     router.get("/",function(req,res){
         res.json({"Message" : "Hello World !"});
     });
@@ -175,7 +175,6 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 						    	if(err){
 						    		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 						    	}else{
-						    		console.log(rows[0].jam_pulang);
 						    		if (rows[0].jam_pulang !== null) {
 						    			data["error"] = true;
 								        data["error_msg"] = 'anda sudah absen';

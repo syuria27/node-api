@@ -4,6 +4,7 @@ var bodyParser  = require("body-parser");
 var md5 = require('MD5');
 var absen = require("./absen.js");
 var login = require("./login.js");
+var product = require("./product.js");
 var app  = express();
 
 function REST(){
@@ -36,8 +37,9 @@ REST.prototype.configureExpress = function(connection) {
       app.use(bodyParser.json());
       var router = express.Router();
       app.use('/api', router);
-      var absen_router = new absen(router,connection,md5);
+      var absen_router = new absen(router,connection);
       var login_router = new login(router,connection,md5);
+      var product_router = new product(router,connection);
       self.startServer();
 }
 
