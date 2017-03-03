@@ -1,6 +1,5 @@
 var mysql = require("mysql");
 const isset = require('isset');
-var InsertQuery = require('mysql-insert-multiple');
 var moment = require('moment');
 
 function PRODUCT_ROUTER(router,connection) {
