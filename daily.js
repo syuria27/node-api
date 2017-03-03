@@ -9,7 +9,7 @@ function DAILY_ROUTER(router,connection,md5) {
 
 DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
     
-    router.post("/daily",function(req,res){
+    router.post("/daily/insert",function(req,res){
     	var data = {"error":true,
 			    "error_msg":""};
 
@@ -83,6 +83,30 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 		        }
             }
         });
+    });
+
+    router.put("/daily/update",function(req,res){
+    	var data = {"error":true,
+			    "error_msg":""};
+
+        if (isset(req.body.kode_laporan) && isset(req.body.ccm)) {
+	        var query = `UPDATE daily_report SET ccm = ? WHERE kode_laporan = ?`;
+	        var table = [req.body.ccm,req.body.kode_laporan];
+	        query = mysql.format(query,table);
+	        console.log(query);
+	        connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	            	data["error"] = false;
+				    data["error_msg"] = 'Success..';
+				    res.json(data);
+	            }
+	        });
+	    }else{
+	    	data["error_msg"] = 'Missing some params..';
+		    res.json(data);
+	    }
     });
 }
 
