@@ -17,7 +17,7 @@ REST.prototype.connectMysql = function() {
     var self = this;
     var pool      =    mysql.createPool({
         connectionLimit : 100,
-        host     : '103.227.147.26',
+        host     : 'npspgmanagement.co.id',
         user     : 'root',
         password : 'npspg2017',
         database : 'npspg_dev',
