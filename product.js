@@ -78,7 +78,7 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
     	var data = {"error":true,
 			    "error_msg":""};
 
-        var query = `SELECT pr.kode_laporan,pr.uid,pr.tanggal,p.nama_product,pr.volume
+        var query = `SELECT pr.id,pr.uid,pr.tanggal,p.nama_product,pr.volume
         			FROM product_report pr 
         			LEFT JOIN product p ON pr.kode_product = p.kode_product  
         			WHERE pr.uid = ? AND pr.tanggal = ?`;
