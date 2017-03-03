@@ -93,8 +93,7 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 	        var query = `UPDATE daily_report SET ccm = ? WHERE kode_laporan = ?`;
 	        var table = [req.body.ccm,req.body.kode_laporan];
 	        query = mysql.format(query,table);
-	        console.log(query);
-	        connection.query(query,function(err,rows){
+	        connection.query(query,function(err){
 	            if(err) {
 	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 	            } else {
