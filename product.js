@@ -9,7 +9,7 @@ function PRODUCT_ROUTER(router,connection) {
 
 PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
     
-    router.get("/products/:uid",function(req,res){
+    router.get("/product/:uid",function(req,res){
     	var data = {"error":true,
 			    "error_msg":""};
 
@@ -35,7 +35,7 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
 	    });
 	});
 
-	router.post("/products/report",function(req,res){
+	router.post("/product/report",function(req,res){
     	var data = {"error":true,
 			    	"error_msg":""};
 		
