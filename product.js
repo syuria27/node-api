@@ -58,7 +58,7 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
 						VALUES ?`;
 			var table = [inserts];
 			query = mysql.format(query,table);
-			connection.query(query,function(err,results){
+			connection.query(query,function(err){
 			    if(err) {
 			    	console.log(err);
 			        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
@@ -74,11 +74,35 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
 		}
 	});
 
+	router.put("/product/update",function(req,res){
+    	var data = {"error":true,
+			    	"error_msg":""};
+		
+		if (isset(req.body.id) && isset(req.body.volume)) {
+	        var query = `UPDATE product_report SET volume = ? WHERE id = ?`;
+			var table = [req.body.volume,req.body.id];
+			query = mysql.format(query,table);
+			connection.query(query,function(err){
+			    if(err) {
+			    	console.log(err);
+			        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+			    } else {
+			        data["error"] = false;
+					data["error_msg"] = 'Report succesfuly updated..';
+					res.json(data);
+				}
+			});
+		}else{
+			data["error_msg"] = 'Missing some params..';
+	        res.json(data);
+		}
+	});
+
 	router.get("/product/:uid/:tanggal",function(req,res){
     	var data = {"error":true,
 			    "error_msg":""};
 
-        var query = `SELECT pr.id,pr.uid,pr.tanggal,p.nama_product,pr.volume
+        var query = `SELECT pr.id,pr.uid,DATE_FORMAT(pr.tanggal, '%d-%m-%Y') as tanggal,p.nama_product,pr.volume
         			FROM product_report pr 
         			LEFT JOIN product p ON pr.kode_product = p.kode_product  
         			WHERE pr.uid = ? AND pr.tanggal = ?`;
