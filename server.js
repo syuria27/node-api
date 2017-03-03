@@ -6,6 +6,7 @@ var absen = require("./absen.js");
 var login = require("./login.js");
 var daily = require("./daily.js");
 var product = require("./product.js");
+var focus = require("./focus.js");
 var app  = express();
 
 function REST(){
@@ -42,6 +43,7 @@ REST.prototype.configureExpress = function(connection) {
       var absen_router = new absen(router,connection);
       var daily_router = new daily(router,connection);
       var product_router = new product(router,connection);
+      var focus_router = new focus(router,connection);
       self.startServer();
 }
 
