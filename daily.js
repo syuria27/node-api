@@ -64,7 +64,7 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
     	var data = {"error":true,
 			    "error_msg":""};
 
-        var query = `SELECT kode_laporan,uid,tanggal,ccm
+        var query = `SELECT kode_laporan,uid,DATE_FORMAT(tanggal, '%d-%m-%Y') as tanggal,ccm
         			FROM daily_report WHERE uid = ? AND MONTH(tanggal) = ? AND YEAR(tanggal) = ?`;
         var table = [req.params.uid,req.params.bulan,req.params.tahun];
         query = mysql.format(query,table);
