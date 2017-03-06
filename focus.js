@@ -2,12 +2,12 @@ var mysql = require("mysql");
 const isset = require('isset');
 var moment = require('moment');
 
-function FOCUS_ROUTER(router,connection) {
+function FOCUS_ROUTER(router,pool) {
     var self = this;
-    self.handleRoutes(router,connection);
+    self.handleRoutes(router,pool);
 }
 
-FOCUS_ROUTER.prototype.handleRoutes= function(router,connection) {
+FOCUS_ROUTER.prototype.handleRoutes= function(router,pool) {
     
     router.get("/focus/:uid",function(req,res){
     	var data = {"error":true,
@@ -17,21 +17,23 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,connection) {
         			(SELECT kode_product FROM focus_report WHERE uid = ?)`;
 	    var table = [req.params.uid];
 	    query = mysql.format(query,table);
-	    connection.query(query,function(err,rows){
-	        if(err) {
-	            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-	        } else {
-	            if(rows.length != 0){
-	                data["error"] = false;
-				    data["error_msg"] = 'Success..';
-				    data["focuses"] = rows;
-				    res.json(data);
-				}else{
-			        data["error_msg"] = 'No product Found..';
-			        res.json(data);
-			    }
-			}
-	    });
+	    pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+		        if(err) {
+		            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+		        } else {
+		            if(rows.length != 0){
+		                data["error"] = false;
+					    data["error_msg"] = 'Success..';
+					    data["focuses"] = rows;
+					    res.json(data);
+					}else{
+				        data["error_msg"] = 'No product Found..';
+				        res.json(data);
+				    }
+				}
+		    });
+		});
 	});
 
 	router.post("/focus/report",function(req,res){
@@ -57,15 +59,17 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,connection) {
 			var table = [inserts];
 			query = mysql.format(query,table);
 			console.log(query);
-			connection.query(query,function(err){
-			    if(err) {
-			    	console.log(err);
-			        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-			    } else {
-			        data["error"] = false;
-					data["error_msg"] = 'Report succesfuly submited';
-					res.json(data);
-				}
+			pool.getConnection(function(err,connection){
+			    connection.query(query,function(err){
+				    if(err) {
+				    	console.log(err);
+				        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+				    } else {
+				        data["error"] = false;
+						data["error_msg"] = 'Report succesfuly submited';
+						res.json(data);
+					}
+				});
 			});
 		}else{
 			data["error_msg"] = 'Missing some params..';
@@ -107,21 +111,23 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,connection) {
         			WHERE pr.uid = ?`;
         var table = [req.params.uid,req.params.tanggal];
         query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-            } else {
-            	if(rows.length > 0){
-                	data["error"] = false;
-			        data["error_msg"] = 'Success..';
-			        data["history"] = rows;
-			        res.json(data);
-			    }else{
-		            data["error_msg"] = 'No History Found..';
-		            res.json(data);
-		        }
-            }
-        });
+        pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	            	if(rows.length > 0){
+	                	data["error"] = false;
+				        data["error_msg"] = 'Success..';
+				        data["history"] = rows;
+				        res.json(data);
+				    }else{
+			            data["error_msg"] = 'No History Found..';
+			            res.json(data);
+			        }
+	            }
+	        });
+	    });
     });
 }
 

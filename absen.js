@@ -4,12 +4,12 @@ const isset = require('isset');
 var fs = require( 'fs' );
 var pad = require('pad-left');
 
-function ABSEN_ROUTER(router,connection) {
+function ABSEN_ROUTER(router,pool) {
     var self = this;
-    self.handleRoutes(router,connection);
+    self.handleRoutes(router,pool);
 }
 
-ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
+ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
     router.get("/",function(req,res){
         res.json({"Message" : "Hello World !"});
     });
@@ -22,21 +22,23 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
         			FROM absen WHERE uid = ? AND MONTH(tanggal) = ? AND YEAR(tanggal) = ?`;
         var table = [req.params.uid,req.params.bulan,req.params.tahun];
         query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-            } else {
-            	if(rows.length != 0){
-                	data["error"] = false;
-			        data["error_msg"] = 'Success..';
-			        data["history"] = rows;
-			        res.json(data);
-		        }else{
-		            data["error_msg"] = 'No History Found..';
-		            res.json(data);
-		        }
-            }
-        });
+        pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	            	if(rows.length != 0){
+	                	data["error"] = false;
+				        data["error_msg"] = 'Success..';
+				        data["history"] = rows;
+				        res.json(data);
+			        }else{
+			            data["error_msg"] = 'No History Found..';
+			            res.json(data);
+			        }
+	            }
+	        });
+	    });
     });
 
     router.get("/absen/masuk/:uid/:bulan/:tahun",function(req,res){
@@ -47,21 +49,23 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
         			FROM absen WHERE uid = ? AND MONTH(tanggal) = ? AND YEAR(tanggal) = ?`;
         var table = [req.params.uid,req.params.bulan,req.params.tahun];
         query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-            } else {
-                if(rows.length > 0){
-                	data["error"] = false;
-			        data["error_msg"] = 'Success..';
-			        data["history"] = rows;
-			        res.json(data);
-			    }else{
-		            data["error_msg"] = 'No History Found..';
-		            res.json(data);
-		        }
-            }
-        });
+        pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	                if(rows.length > 0){
+	                	data["error"] = false;
+				        data["error_msg"] = 'Success..';
+				        data["history"] = rows;
+				        res.json(data);
+				    }else{
+			            data["error_msg"] = 'No History Found..';
+			            res.json(data);
+			        }
+	            }
+	        });
+	    });
     });
 
     router.post("/absen/masuk",function(req,res){
@@ -87,47 +91,53 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
 	        				= DATE(CONVERT_TZ(CURDATE(),@@session.time_zone,'+07:00'))`;
 	        	var table = [req.body.uid];
         		query = mysql.format(query,table);
-        		connection.query(query,function(err,rows){
-        			if(err) {
-		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-		            } else {
-		                if(rows.length > 0){
-		                	data["error"] = true;
-					        data["error_msg"] = 'Already absen';
-					        res.json(data);
-					    }else{
-					    	var query = `INSERT INTO absen (uid, tanggal, jam_masuk, lokasi_masuk) 
-					    				VALUES(?, CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), 
-					    				CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), ?)`;
-				        	var table = [req.body.uid,req.body.lokasi];
-			        		query = mysql.format(query,table);
-			        		connection.query(query,function(err,results){
-			        			if(err) {
-			        				console.log(err);
-					                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-					            } else {
-					            	var kode_absen = 'ABS-' + (pad(results.insertId, 11, '0'));
-					            	var query = `UPDATE absen SET kode_absen = ? WHERE id = ?`;
-						        	var table = [kode_absen,results.insertId];
-					        		query = mysql.format(query,table);
-					        		connection.query(query,function(err){
-					        			if (err) {
+        		pool.getConnection(function(err,connection){
+		    		connection.query(query,function(err,rows){
+	        			if(err) {
+			                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+			            } else {
+			                if(rows.length > 0){
+			                	data["error"] = true;
+						        data["error_msg"] = 'Already absen';
+						        res.json(data);
+						    }else{
+						    	var query = `INSERT INTO absen (uid, tanggal, jam_masuk, lokasi_masuk) 
+						    				VALUES(?, CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), 
+						    				CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), ?)`;
+					        	var table = [req.body.uid,req.body.lokasi];
+				        		query = mysql.format(query,table);
+				        		pool.getConnection(function(err,connection){
+			    					connection.query(query,function(err,results){
+					        			if(err) {
 					        				console.log(err);
-					                		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-					        			}else{
-					        				fs.writeFile('./upload/'+kode_absen+'-M.jpeg', req.body.photo, 'base64', function(err) {
-											    console.log(err);
-											});
-											data["error"] = false;
-							            	data["error_msg"] = 'Absen succesfuly submited';
-						            		res.json(data);
-							        	}
-					        		});
-					            }
-					        });
-				        }
-		            }
-        		});
+							                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+							            } else {
+							            	var kode_absen = 'ABS-' + (pad(results.insertId, 11, '0'));
+							            	var query = `UPDATE absen SET kode_absen = ? WHERE id = ?`;
+								        	var table = [kode_absen,results.insertId];
+							        		query = mysql.format(query,table);
+							        		pool.getConnection(function(err,connection){
+			    								connection.query(query,function(err){
+								        			if (err) {
+								        				console.log(err);
+								                		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+								        			}else{
+								        				fs.writeFile('./upload/'+kode_absen+'-M.jpeg', req.body.photo, 'base64', function(err) {
+														    console.log(err);
+														});
+														data["error"] = false;
+										            	data["error_msg"] = 'Absen succesfuly submited';
+									            		res.json(data);
+										        	}
+								        		});
+								        	});
+							            }
+							        });
+							    });
+					        }
+			            }
+	        		});
+	        	});
 	        }
 	    }else{
 	    	data["error_msg"] = 'Missing some params..';
@@ -158,52 +168,58 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,connection) {
 	        				= DATE(CONVERT_TZ(CURDATE(),@@session.time_zone,'+07:00'))`;
 	        	var table = [req.body.uid];
         		query = mysql.format(query,table);
-        		connection.query(query,function(err,rows){
-        			if(err) {
-		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-		            } else {
-		                if(rows.length == 0){
-		                	data["error"] = true;
-					        data["error_msg"] = 'anda sudah telat hari ini';
-					        res.json(data);
-					    }else{
-					    	var query = `SELECT kode_absen,jam_pulang FROM absen 
-					    				WHERE kode_absen = ?`;
-				        	var table = [rows[0].kode_absen];
-			        		query = mysql.format(query,table);
-			        		connection.query(query,function(err,rows){
-						    	if(err){
-						    		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-						    	}else{
-						    		if (rows[0].jam_pulang !== null) {
-						    			data["error"] = true;
-								        data["error_msg"] = 'anda sudah absen';
-								        res.json(data);
-						    		}else{
-						    			var kode_absen = rows[0].kode_absen;
-								    	var query = `UPDATE absen SET jam_pulang = CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'),
-								    				 lokasi_pulang = ? WHERE kode_absen = ?`;
-							        	var table = [req.body.lokasi,kode_absen];
-						        		query = mysql.format(query,table);
-						        		connection.query(query,function(err,results){
-						        			if(err) {
-						        				console.log(err);
-								                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-								            } else {
-								           		fs.writeFile('./upload/'+kode_absen+'-P.jpeg', req.body.photo, 'base64', function(err) {
-											    console.log(err);
-												});
-												data["error"] = false;
-								            	data["error_msg"] = 'Absen succesfuly submited';
-								            	res.json(data);
-										    }
-								        });
-						    		}
-						    	}
-						    });
-				        }
-		            }
-        		});
+        		pool.getConnection(function(err,connection){
+			    	connection.query(query,function(err,rows){
+	        			if(err) {
+			                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+			            } else {
+			                if(rows.length == 0){
+			                	data["error"] = true;
+						        data["error_msg"] = 'anda sudah telat hari ini';
+						        res.json(data);
+						    }else{
+						    	var query = `SELECT kode_absen,jam_pulang FROM absen 
+						    				WHERE kode_absen = ?`;
+					        	var table = [rows[0].kode_absen];
+				        		query = mysql.format(query,table);
+				        		pool.getConnection(function(err,connection){
+			    					connection.query(query,function(err,rows){
+								    	if(err){
+								    		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+								    	}else{
+								    		if (rows[0].jam_pulang !== null) {
+								    			data["error"] = true;
+										        data["error_msg"] = 'anda sudah absen';
+										        res.json(data);
+								    		}else{
+								    			var kode_absen = rows[0].kode_absen;
+										    	var query = `UPDATE absen SET jam_pulang = CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'),
+										    				 lokasi_pulang = ? WHERE kode_absen = ?`;
+									        	var table = [req.body.lokasi,kode_absen];
+								        		query = mysql.format(query,table);
+								        		pool.getConnection(function(err,connection){
+			    									connection.query(query,function(err,results){
+									        			if(err) {
+									        				console.log(err);
+											                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+											            } else {
+											           		fs.writeFile('./upload/'+kode_absen+'-P.jpeg', req.body.photo, 'base64', function(err) {
+														    console.log(err);
+															});
+															data["error"] = false;
+											            	data["error_msg"] = 'Absen succesfuly submited';
+											            	res.json(data);
+													    }
+											        });
+											    });
+								    		}
+								    	}
+								    });
+								});
+					        }
+			            }
+	        		});
+	        	});
 	        }
 	    }else{
 	    	data["error_msg"] = 'Missing some params..';

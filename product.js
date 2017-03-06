@@ -2,12 +2,12 @@ var mysql = require("mysql");
 const isset = require('isset');
 var moment = require('moment');
 
-function PRODUCT_ROUTER(router,connection) {
+function PRODUCT_ROUTER(router,pool) {
     var self = this;
-    self.handleRoutes(router,connection);
+    self.handleRoutes(router,pool);
 }
 
-PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
+PRODUCT_ROUTER.prototype.handleRoutes= function(router,pool) {
     
     router.get("/product/:uid",function(req,res){
     	var data = {"error":true,
@@ -18,21 +18,23 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
         			 AND tanggal = DATE(CONVERT_TZ(CURDATE(),@@session.time_zone,'+07:00')))`;
 	    var table = [req.params.uid];
 	    query = mysql.format(query,table);
-	    connection.query(query,function(err,rows){
-	        if(err) {
-	            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-	        } else {
-	            if(rows.length != 0){
-	                data["error"] = false;
-				    data["error_msg"] = 'Success..';
-				    data["products"] = rows;
-				    res.json(data);
-				}else{
-			        data["error_msg"] = 'No product Found..';
-			        res.json(data);
-			    }
-			}
-	    });
+	    pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+		        if(err) {
+		            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+		        } else {
+		            if(rows.length != 0){
+		                data["error"] = false;
+					    data["error_msg"] = 'Success..';
+					    data["products"] = rows;
+					    res.json(data);
+					}else{
+				        data["error_msg"] = 'No product Found..';
+				        res.json(data);
+				    }
+				}
+		    });
+		});
 	});
 
 	router.post("/product/report",function(req,res){
@@ -58,15 +60,17 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
 						VALUES ?`;
 			var table = [inserts];
 			query = mysql.format(query,table);
-			connection.query(query,function(err){
-			    if(err) {
-			    	console.log(err);
-			        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-			    } else {
-			        data["error"] = false;
-					data["error_msg"] = 'Report succesfuly submited';
-					res.json(data);
-				}
+			pool.getConnection(function(err,connection){
+			    connection.query(query,function(err){
+				    if(err) {
+				    	console.log(err);
+				        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+				    } else {
+				        data["error"] = false;
+						data["error_msg"] = 'Report succesfuly submited';
+						res.json(data);
+					}
+				});
 			});
 		}else{
 			data["error_msg"] = 'Missing some params..';
@@ -82,15 +86,17 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
 	        var query = `UPDATE product_report SET volume = ? WHERE id = ?`;
 			var table = [req.body.volume,req.body.id];
 			query = mysql.format(query,table);
-			connection.query(query,function(err){
-			    if(err) {
-			    	console.log(err);
-			        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-			    } else {
-			        data["error"] = false;
-					data["error_msg"] = 'Report succesfuly updated..';
-					res.json(data);
-				}
+			pool.getConnection(function(err,connection){
+			    connection.query(query,function(err){
+				    if(err) {
+				    	console.log(err);
+				        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+				    } else {
+				        data["error"] = false;
+						data["error_msg"] = 'Report succesfuly updated..';
+						res.json(data);
+					}
+				});
 			});
 		}else{
 			data["error_msg"] = 'Missing some params..';
@@ -108,21 +114,23 @@ PRODUCT_ROUTER.prototype.handleRoutes= function(router,connection) {
         			WHERE pr.uid = ? AND pr.tanggal = ?`;
         var table = [req.params.uid,req.params.tanggal];
         query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-            } else {
-            	if(rows.length > 0){
-                	data["error"] = false;
-			        data["error_msg"] = 'Success..';
-			        data["history"] = rows;
-			        res.json(data);
-			    }else{
-		            data["error_msg"] = 'No History Found..';
-		            res.json(data);
-		        }
-            }
-        });
+        pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	            	if(rows.length > 0){
+	                	data["error"] = false;
+				        data["error_msg"] = 'Success..';
+				        data["history"] = rows;
+				        res.json(data);
+				    }else{
+			            data["error_msg"] = 'No History Found..';
+			            res.json(data);
+			        }
+	            }
+	        });
+	    });
     });
 }
 

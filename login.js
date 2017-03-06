@@ -1,12 +1,12 @@
 var mysql = require("mysql");
 const isset = require('isset');
 
-function LOGIN_ROUTER(router,connection,md5) {
+function LOGIN_ROUTER(router,pool,md5) {
     var self = this;
-    self.handleRoutes(router,connection,md5);
+    self.handleRoutes(router,pool,md5);
 }
 
-LOGIN_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
+LOGIN_ROUTER.prototype.handleRoutes= function(router,pool,md5) {
     
     router.post("/login",function(req,res){
     	var data = {"error":true,
@@ -18,26 +18,28 @@ LOGIN_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 	         			WHERE u.kode_spg = ? AND l.hak_akses = 'User'`;
 	        var table = [req.body.username];
 	        query = mysql.format(query,table);
-	        connection.query(query,function(err,rows){
-	            if(err) {
-	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-	            } else {
-	                if(rows.length != 0){
-	                	if (rows[0].password == md5(req.body.password)) {
-				            data["error"] = false;
-				            data["error_msg"] = 'Success..';
-				            data["user"] = rows[0];
-				            res.json(data);
+	        pool.getConnection(function(err,connection){
+		        connection.query(query,function(err,rows){
+		            if(err) {
+		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+		            } else {
+		                if(rows.length != 0){
+		                	if (rows[0].password == md5(req.body.password)) {
+					            data["error"] = false;
+					            data["error_msg"] = 'Success..';
+					            data["user"] = rows[0];
+					            res.json(data);
+					        }else{
+					        	data["error_msg"] = 'Login Gagal Cek password..';
+				            	res.json(data);
+					        }
 				        }else{
-				        	data["error_msg"] = 'Login Gagal Cek password..';
-			            	res.json(data);
+				            data["error_msg"] = 'No users Found..';
+				            res.json(data);
 				        }
-			        }else{
-			            data["error_msg"] = 'No users Found..';
-			            res.json(data);
-			        }
-	            }
-	        });
+		            }
+		        });
+	    	});
 	    }else{
 	    	data["error_msg"] = 'Missing some params..';
 	        res.json(data);

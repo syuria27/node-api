@@ -2,12 +2,12 @@ var mysql = require("mysql");
 const isset = require('isset');
 var pad = require('pad-left');
 
-function DAILY_ROUTER(router,connection,md5) {
+function DAILY_ROUTER(router,pool) {
     var self = this;
-    self.handleRoutes(router,connection,md5);
+    self.handleRoutes(router,pool);
 }
 
-DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
+DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
     
     router.post("/daily/insert",function(req,res){
     	var data = {"error":true,
@@ -18,41 +18,47 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 	        			= DATE(CONVERT_TZ(CURDATE(),@@session.time_zone,'+07:00'))`;
 	        var table = [req.body.uid];
         	query = mysql.format(query,table);
-        	connection.query(query,function(err,rows){
-        		if(err) {
-		            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-		        } else {
-		            if(rows.length > 0){
-		              	data["error"] = true;
-					    data["error_msg"] = 'Already submited';
-					    res.json(data);
-					}else{
-						var query = `INSERT INTO daily_report (uid, tanggal, ccm) 
-								    VALUES(?, CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), ?)`;
-					    var table = [req.body.uid,req.body.ccm];
-					    query = mysql.format(query,table);
-					    connection.query(query,function(err,results){
-					        if(err) {
-					            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-					        } else {
-					            var kode_report = 'LPD-' + (pad(results.insertId, 11, '0'));
-								var query = `UPDATE daily_report SET kode_laporan = ? WHERE id = ?`;
-								var table = [kode_report,results.insertId];
-								query = mysql.format(query,table);
-								connection.query(query,function(err){
-									if (err) {
-										console.log(err);
-										res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-									}else{
-										data["error"] = false;
-										data["error_msg"] = 'Report succesfuly submited';
-										res.json(data);
-									}
-								});
-					        }
-					    });
+        	pool.getConnection(function(err,connection){
+			    connection.query(query,function(err,rows){
+	        		if(err) {
+			            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+			        } else {
+			            if(rows.length > 0){
+			              	data["error"] = true;
+						    data["error_msg"] = 'Already submited';
+						    res.json(data);
+						}else{
+							var query = `INSERT INTO daily_report (uid, tanggal, ccm) 
+									    VALUES(?, CONVERT_TZ(NOW(),@@session.time_zone,'+07:00'), ?)`;
+						    var table = [req.body.uid,req.body.ccm];
+						    query = mysql.format(query,table);
+						    pool.getConnection(function(err,connection){
+			    				connection.query(query,function(err,results){
+							        if(err) {
+							            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+							        } else {
+							            var kode_report = 'LPD-' + (pad(results.insertId, 11, '0'));
+										var query = `UPDATE daily_report SET kode_laporan = ? WHERE id = ?`;
+										var table = [kode_report,results.insertId];
+										query = mysql.format(query,table);
+										pool.getConnection(function(err,connection){
+			    							connection.query(query,function(err){
+												if (err) {
+													console.log(err);
+													res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+												}else{
+													data["error"] = false;
+													data["error_msg"] = 'Report succesfuly submited';
+													res.json(data);
+												}
+											});
+										});
+							        }
+							    });
+							});
+						}
 					}
-				}
+				});
 			});
 	    }else{
 	    	data["error_msg"] = 'Missing some params..';
@@ -68,21 +74,23 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
         			FROM daily_report WHERE uid = ? AND MONTH(tanggal) = ? AND YEAR(tanggal) = ?`;
         var table = [req.params.uid,req.params.bulan,req.params.tahun];
         query = mysql.format(query,table);
-        connection.query(query,function(err,rows){
-            if(err) {
-                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-            } else {
-            	if(rows.length != 0){
-                	data["error"] = false;
-			        data["error_msg"] = 'Success..';
-			        data["history"] = rows;
-			        res.json(data);
-		        }else{
-		            data["error_msg"] = 'No History Found..';
-		            res.json(data);
-		        }
-            }
-        });
+        pool.getConnection(function(err,connection){
+		    connection.query(query,function(err,rows){
+	            if(err) {
+	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+	            } else {
+	            	if(rows.length != 0){
+	                	data["error"] = false;
+				        data["error_msg"] = 'Success..';
+				        data["history"] = rows;
+				        res.json(data);
+			        }else{
+			            data["error_msg"] = 'No History Found..';
+			            res.json(data);
+			        }
+	            }
+	        });
+	    });
     });
 
     router.put("/daily/update",function(req,res){
@@ -93,15 +101,17 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,connection,md5) {
 	        var query = `UPDATE daily_report SET ccm = ? WHERE kode_laporan = ?`;
 	        var table = [req.body.ccm,req.body.kode_laporan];
 	        query = mysql.format(query,table);
-	        connection.query(query,function(err){
-	            if(err) {
-	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
-	            } else {
-	            	data["error"] = false;
-				    data["error_msg"] = 'Success..';
-				    res.json(data);
-	            }
-	        });
+	        pool.getConnection(function(err,connection){
+			    connection.query(query,function(err){
+		            if(err) {
+		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
+		            } else {
+		            	data["error"] = false;
+					    data["error_msg"] = 'Success..';
+					    res.json(data);
+		            }
+		        });
+		    });
 	    }else{
 	    	data["error_msg"] = 'Missing some params..';
 		    res.json(data);
