@@ -24,6 +24,7 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
         query = mysql.format(query,table);
         pool.getConnection(function(err,connection){
 		    connection.query(query,function(err,rows){
+	            connection.release();
 	            if(err) {
 	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 	            } else {
@@ -51,6 +52,7 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
         query = mysql.format(query,table);
         pool.getConnection(function(err,connection){
 		    connection.query(query,function(err,rows){
+	            connection.release();
 	            if(err) {
 	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 	            } else {
@@ -93,7 +95,8 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
         		query = mysql.format(query,table);
         		pool.getConnection(function(err,connection){
 		    		connection.query(query,function(err,rows){
-	        			if(err) {
+	        			connection.release();
+	            		if(err) {
 			                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 			            } else {
 			                if(rows.length > 0){
@@ -108,7 +111,8 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
 				        		query = mysql.format(query,table);
 				        		pool.getConnection(function(err,connection){
 			    					connection.query(query,function(err,results){
-					        			if(err) {
+					        			connection.release();
+	            						if(err) {
 					        				console.log(err);
 							                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 							            } else {
@@ -118,12 +122,12 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
 							        		query = mysql.format(query,table);
 							        		pool.getConnection(function(err,connection){
 			    								connection.query(query,function(err){
-								        			if (err) {
+								        			connection.release();
+	            									if (err) {
 								        				console.log(err);
 								                		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 								        			}else{
 								        				fs.writeFile('./upload/'+kode_absen+'-M.jpeg', req.body.photo, 'base64', function(err) {
-														    console.log(err);
 														});
 														data["error"] = false;
 										            	data["error_msg"] = 'Absen succesfuly submited';
@@ -170,7 +174,8 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
         		query = mysql.format(query,table);
         		pool.getConnection(function(err,connection){
 			    	connection.query(query,function(err,rows){
-	        			if(err) {
+	        			connection.release();
+	            		if(err) {
 			                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 			            } else {
 			                if(rows.length == 0){
@@ -184,7 +189,8 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
 				        		query = mysql.format(query,table);
 				        		pool.getConnection(function(err,connection){
 			    					connection.query(query,function(err,rows){
-								    	if(err){
+								    	connection.release();
+	            						if(err){
 								    		res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 								    	}else{
 								    		if (rows[0].jam_pulang !== null) {
@@ -199,13 +205,13 @@ ABSEN_ROUTER.prototype.handleRoutes= function(router,pool) {
 								        		query = mysql.format(query,table);
 								        		pool.getConnection(function(err,connection){
 			    									connection.query(query,function(err,results){
-									        			if(err) {
+									        			connection.release();
+	            										if(err) {
 									        				console.log(err);
 											                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 											            } else {
 											           		fs.writeFile('./upload/'+kode_absen+'-P.jpeg', req.body.photo, 'base64', function(err) {
-														    console.log(err);
-															});
+														    });
 															data["error"] = false;
 											            	data["error_msg"] = 'Absen succesfuly submited';
 											            	res.json(data);

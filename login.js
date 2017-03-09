@@ -20,7 +20,8 @@ LOGIN_ROUTER.prototype.handleRoutes= function(router,pool,md5) {
 	        query = mysql.format(query,table);
 	        pool.getConnection(function(err,connection){
 		        connection.query(query,function(err,rows){
-		            if(err) {
+		            connection.release();
+	            	if(err) {
 		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 		            } else {
 		                if(rows.length != 0){
@@ -30,7 +31,7 @@ LOGIN_ROUTER.prototype.handleRoutes= function(router,pool,md5) {
 					            data["user"] = rows[0];
 					            res.json(data);
 					        }else{
-					        	data["error_msg"] = 'Login Gagal Cek password..';
+					        	data["error_msg"] = 'Login fail check password..';
 				            	res.json(data);
 					        }
 				        }else{

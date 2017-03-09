@@ -20,12 +20,13 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
         	query = mysql.format(query,table);
         	pool.getConnection(function(err,connection){
 			    connection.query(query,function(err,rows){
-	        		if(err) {
+	        		connection.release();
+	            	if(err) {
 			            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 			        } else {
 			            if(rows.length > 0){
 			              	data["error"] = true;
-						    data["error_msg"] = 'Already submited';
+						    data["error_msg"] = 'Report already submited..';
 						    res.json(data);
 						}else{
 							var query = `INSERT INTO daily_report (uid, tanggal, ccm) 
@@ -34,7 +35,8 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
 						    query = mysql.format(query,table);
 						    pool.getConnection(function(err,connection){
 			    				connection.query(query,function(err,results){
-							        if(err) {
+							        connection.release();
+	            					if(err) {
 							            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 							        } else {
 							            var kode_report = 'LPD-' + (pad(results.insertId, 11, '0'));
@@ -43,12 +45,13 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
 										query = mysql.format(query,table);
 										pool.getConnection(function(err,connection){
 			    							connection.query(query,function(err){
-												if (err) {
+												connection.release();
+	            								if (err) {
 													console.log(err);
 													res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 												}else{
 													data["error"] = false;
-													data["error_msg"] = 'Report succesfuly submited';
+													data["error_msg"] = 'Report succesfuly submited..';
 													res.json(data);
 												}
 											});
@@ -76,6 +79,7 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
         query = mysql.format(query,table);
         pool.getConnection(function(err,connection){
 		    connection.query(query,function(err,rows){
+	            connection.release();
 	            if(err) {
 	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 	            } else {
@@ -103,11 +107,12 @@ DAILY_ROUTER.prototype.handleRoutes= function(router,pool) {
 	        query = mysql.format(query,table);
 	        pool.getConnection(function(err,connection){
 			    connection.query(query,function(err){
-		            if(err) {
+		            connection.release();
+	            	if(err) {
 		                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 		            } else {
 		            	data["error"] = false;
-					    data["error_msg"] = 'Success..';
+					    data["error_msg"] = 'Report succesfuly updated..';
 					    res.json(data);
 		            }
 		        });

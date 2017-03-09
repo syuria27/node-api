@@ -19,7 +19,8 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,pool) {
 	    query = mysql.format(query,table);
 	    pool.getConnection(function(err,connection){
 		    connection.query(query,function(err,rows){
-		        if(err) {
+		        connection.release();
+	            if(err) {
 		            res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 		        } else {
 		            if(rows.length != 0){
@@ -61,12 +62,13 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,pool) {
 			console.log(query);
 			pool.getConnection(function(err,connection){
 			    connection.query(query,function(err){
-				    if(err) {
+				    connection.release();
+	            	if(err) {
 				    	console.log(err);
 				        res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 				    } else {
 				        data["error"] = false;
-						data["error_msg"] = 'Report succesfuly submited';
+						data["error_msg"] = 'Report succesfuly submited..';
 						res.json(data);
 					}
 				});
@@ -113,6 +115,7 @@ FOCUS_ROUTER.prototype.handleRoutes= function(router,pool) {
         query = mysql.format(query,table);
         pool.getConnection(function(err,connection){
 		    connection.query(query,function(err,rows){
+	            connection.release();
 	            if(err) {
 	                res.json({"error" : true, "error_msg" : "Error executing MySQL query"});
 	            } else {
